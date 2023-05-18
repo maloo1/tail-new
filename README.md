@@ -1,2 +1,2 @@
 # tail-new
-Bash wrapper to monitor rotated logs
+Bash wrapper to monitor newly created logs in a directory
