@@ -33,3 +33,18 @@ An example of this being used could be (note the glob):
 ```
 tail -e /var/log/app/filter*
 ```
+
+## tail-new-wrapper without replacing tail
+Alternatively this version could be installed so it does not replace the existing tail
+
+To install this version you will also need to setup an alias as follows:
+```
+sudo curl -o /usr/bin/tail-new-wrapper https://raw.githubusercontent.com/maloo1/tail-new/main/tail-new-wrapper
+sudo chmod 755 /usr/bin/tail-new-wrapper
+sudo echo "alias ntail='set -f;new-tail';new-tail(){ command /usr/bin/tail-new-wrapper -e \"$@\";set +f;}" >/etc/profile.d/tail-new-wrapper.sh
+```
+
+An example of this being used could be (note the glob):
+```
+ntail -e /var/log/app/filter*
+```
