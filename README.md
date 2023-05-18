@@ -46,5 +46,5 @@ sudo echo "alias ntail='set -f;new-tail';new-tail(){ command /usr/bin/tail-new-w
 
 An example of this being used could be (note the glob):
 ```
-ntail -e /var/log/app/filter*
+ntail /var/log/app/filter*
 ```
