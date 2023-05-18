@@ -19,8 +19,8 @@ tail-new /var/log/app/filter
 ## tail-new-wrapper
 This is a version that is intended to be aliased so that globs can be used.\
 This version should (mostly) work the same as the standard tail command and does the following:
-    - If the -e or --new-tail commandline option is passed it will invoke the "enhanced" tail functionality where the files specified with a glob are monitored and tail restarted if a new file is created that matches the glob
-    - Otherwise the original command line arguments are passed through to the standard tail command.
+- If the -e or --new-tail commandline option is passed it will invoke the "enhanced" tail functionality where the files specified with a glob are monitored and tail restarted if a new file is created that matches the glob
+- Otherwise the original command line arguments are passed through to the standard tail command.
   
 To install this version you will also need to setup an alias as follows:
 ```
