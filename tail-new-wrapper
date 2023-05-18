@@ -1,0 +1,79 @@
+#!/bin/bash
+#Paul J
+#18/05/2023
+#Bash wrapper for tail to support newly created log files
+
+set -e
+
+ORIG_ARGS="$@"
+
+LONGOPTS=bytes:,follow,lines:,max-unchanged-stats:,pid:,quiet,silent,retry,sleep-interval:,verbose,help,version,new-tail,sleep-time
+OPTIONS=c:fFn:qs:ve
+PARSED=$(getopt --options=$OPTIONS --longoptions=$LONGOPTS --name "$0" -- "$@")
+
+NEWTAIL=n
+NUM_LINES=0
+QUIET=
+SLEEP_TIME=1
+eval set -- "$PARSED"
+while true
+do
+  case "$1" in
+    -e | --new-tail )
+        NEWTAIL=y
+        shift
+        ;;
+    --sleep-time)
+        SLEEP_TIME="$2"
+        shift 2
+        ;;
+    -q | --quiet | --silent)
+        QUIET=-q
+        shift
+        ;;
+    -n | --lines)
+        NUM_LINES="$2"
+        shift 2
+        ;;
+    #Options we don't care about (for enhanced version)
+    -f | --follow | -F | --retry | -v | --verbose | --help | --version)
+        shift
+        ;;
+    -c | --bytes | --max-unchanged-stats | --pid | -s | --sleep-interval)
+        shift 2
+        ;;
+    --)
+        shift
+        break
+        ;;
+    *) echo "Unexpected option: $1 from wrapper script $0"
+       exit 1
+       ;;
+  esac
+done
+
+set +f
+if [ "$NEWTAIL" = "y" ]; then
+    #This is the enhanced "tail-new" version where newly created files are tailed
+    trap "trap - SIGTERM && kill -- -$$" SIGINT SIGTERM EXIT
+
+    LAST_FILE=$(find $@ -type f -printf '%T+ %p\0' | sort -z | sed -zn '1s/[^ ]\{1,\} //p')
+    tail $QUIET -n $NUM_LINES -f $@ &
+    PID=$!
+
+    while true; do
+        NEW_LAST_FILE=$(find $@ -type f -printf '%T+ %p\0' | sort -z | sed -zn '1s/[^ ]\{1,\} //p')
+        if [ "$NEW_LAST_FILE" != "$LAST_FILE" ]; then
+            echo "New file detected, restarting tail. Some lines may be missed..."
+            kill $PID
+            tail $QUIET -n 0 -f $@ &
+            PID=$!
+        fi
+        LAST_FILE=$NEW_LAST_FILE
+        sleep $SLEEP_TIME
+    done
+else
+    #Otherwise just call normal tail
+    set -- $ORIG_ARGS
+    tail $ORIG_ARGS
+fi
