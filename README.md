@@ -26,7 +26,13 @@ To install this version you will also need to setup an alias as follows:
 ```
 sudo curl -o /usr/bin/tail-new-wrapper https://raw.githubusercontent.com/maloo1/tail-new/main/tail-new-wrapper
 sudo chmod 755 /usr/bin/tail-new-wrapper
-sudo echo "alias tail='set -f;new-tail';new-tail(){ command /usr/bin/tail-new-wrapper \"$@\";set +f;}" >/etc/profile.d/tail-new-wrapper.sh
+sudo cat << 'EOF' >/etc/profile.d/tail-new-wrapper.sh
+alias tail='set -f; new-tail'
+new-tail(){
+    command /usr/bin/tail-new-wrapper "$@"
+    set +f
+}
+EOF
 ```
 
 An example of this being used could be (note the glob):
@@ -41,7 +47,13 @@ To install this version you will also need to setup an alias as follows:
 ```
 sudo curl -o /usr/bin/tail-new-wrapper https://raw.githubusercontent.com/maloo1/tail-new/main/tail-new-wrapper
 sudo chmod 755 /usr/bin/tail-new-wrapper
-sudo echo "alias ntail='set -f;new-tail';new-tail(){ command /usr/bin/tail-new-wrapper -e \"$@\";set +f;}" >/etc/profile.d/tail-new-wrapper.sh
+sudo cat << 'EOF' >/etc/profile.d/tail-new-wrapper.sh
+alias ntail='set -f; new-tail'
+new-tail(){
+    command /usr/bin/tail-new-wrapper -e "$@"
+    set +f
+}
+EOF
 ```
 
 An example of this being used could be (note the glob):
