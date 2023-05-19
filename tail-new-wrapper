@@ -1,11 +1,35 @@
 #!/bin/bash
-#Paul J
-#18/05/2023
 #Bash wrapper for tail to support newly created log files
 
 set -e
 
 ORIG_ARGS="$@"
+
+usage(){
+   echo "NAME: ntail or tail-new-wrapper - Bash wrapper for tail to support newly created log files"
+   echo
+   echo "USAGE: $0 [-e|--new-tail][--sleep-time <sleep time in sec>][-q|--quiet|--silent][-n|--lines <number of lines to tail>]  <file glob to tail>"
+   echo
+   echo "DESCRIPTION:"
+   echo "  Wrapper for tail that will restart the tail process if a new file matching the file glob is found."
+   echo "  Useful for tailing log files produced by an application that creates new, date stamped log files."
+   echo
+   echo "  If called without the -e/--new-tail argument the standard tail command line options are passed through to the standard tail command."
+   echo "  See 'man tail' for more information tail commandline options."
+   echo
+   echo "  The following commandline options apply to the 'enhanced' tail usage:"
+   echo "    -e, --new-tail"
+   echo "            Invoke the 'enhanced' tail that will restart tail when a new file is found matching the file glob"
+   echo "    --sleep-time"
+   echo "            Specify the ammount of time to sleep for between checking for new files. Default is 1 second. This can take decimal values."
+   echo "    -n, --lines=K"
+   echo "            Output the last K lines; or use -n +K to output starting with the Kth. Default is 0."
+   echo "    -q, --quiet, --silent"
+   echo "            Never output headers giving file names"
+   echo "    -h, --help"
+   echo "            Show this help"
+   echo
+}
 
 LONGOPTS=bytes:,follow,lines:,max-unchanged-stats:,pid:,quiet,silent,retry,sleep-interval:,verbose,help,version,new-tail,sleep-time
 OPTIONS=c:fFn:qs:ve
@@ -35,6 +59,10 @@ do
         NUM_LINES="$2"
         shift 2
         ;;
+    -h | --help)
+        usage
+        exit
+        ;;
     #Options we don't care about (for enhanced version)
     -f | --follow | -F | --retry | -v | --verbose | --help | --version)
         shift
@@ -57,12 +85,12 @@ if [ "$NEWTAIL" = "y" ]; then
     #This is the enhanced "tail-new" version where newly created files are tailed
     trap "trap - SIGTERM && kill -- -$$" SIGINT SIGTERM EXIT
 
-    LAST_FILE=$(find $@ -type f -printf '%T+ %p\0' | sort -z | sed -zn '1s/[^ ]\{1,\} //p')
+    LAST_FILE=$(find $@ -type f -printf '%T+ %p\0' | sort -z -r | sed -zn '1s/[^ ]\{1,\} //p')
     tail $QUIET -n $NUM_LINES -f $@ &
     PID=$!
 
     while true; do
-        NEW_LAST_FILE=$(find $@ -type f -printf '%T+ %p\0' | sort -z | sed -zn '1s/[^ ]\{1,\} //p')
+        NEW_LAST_FILE=$(find $@ -type f -printf '%T+ %p\0' | sort -z -r | sed -zn '1s/[^ ]\{1,\} //p')
         if [ "$NEW_LAST_FILE" != "$LAST_FILE" ]; then
             echo "New file detected, restarting tail. Some lines may be missed..."
             kill $PID
