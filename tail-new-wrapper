@@ -29,10 +29,11 @@ usage(){
    echo "    -h, --help"
    echo "            Show this help"
    echo
+   exit 2
 }
 
 LONGOPTS=bytes:,follow,lines:,max-unchanged-stats:,pid:,quiet,silent,retry,sleep-interval:,verbose,help,version,new-tail,sleep-time
-OPTIONS=c:fFn:qs:ve
+OPTIONS=c:fFn:qs:veh
 PARSED=$(getopt --options=$OPTIONS --longoptions=$LONGOPTS --name "$0" -- "$@")
 
 NEWTAIL=n
@@ -61,7 +62,6 @@ do
         ;;
     -h | --help)
         usage
-        exit
         ;;
     #Options we don't care about (for enhanced version)
     -f | --follow | -F | --retry | -v | --verbose | --help | --version)
@@ -80,9 +80,16 @@ do
   esac
 done
 
-set +f
 if [ "$NEWTAIL" = "y" ]; then
     #This is the enhanced "tail-new" version where newly created files are tailed
+    if ! echo "ARG: $@" | grep -q '*'; then
+        echo "Enhanced new-tail option requested but no glob character found in command line arguments"
+        echo "Ensure the non option command line argument contains a glob (*) character so new files matching the glob can be recognised for tailing"
+        echo "This script also needs to have shell globbing turned off to work."
+        echo "Ensure this script is called via alias (eg: ntail), or disable shell globbing before running (by running set -f before running this script)"
+        exit 1
+    fi
+
     trap "trap - SIGTERM && kill -- -$$" SIGINT SIGTERM EXIT
 
     LAST_FILE=$(find $@ -type f -printf '%T+ %p\0' | sort -z -r | sed -zn '1s/[^ ]\{1,\} //p')
