@@ -90,7 +90,11 @@ if [ "$NEWTAIL" = "y" ]; then
         exit 1
     fi
 
-    trap "trap - SIGTERM && kill -- -$$" SIGINT SIGTERM EXIT
+    trap cleanup SIGINT SIGTERM EXIT
+    cleanup(){
+        kill -s SIGTERM 0
+        exit
+    }
 
     LAST_FILE=$(find $@ -type f -printf '%T+ %p\0' | sort -z -r | sed -zn '1s/[^ ]\{1,\} //p')
     tail $QUIET -n $NUM_LINES -f $@ &
